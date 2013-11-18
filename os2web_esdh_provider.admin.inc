@@ -34,6 +34,7 @@ function _os2web_esdh_provider_status() {
   // Show a table of watchdog entries if the debug flag is on.
   $watchdog_table = '';
   if (variable_get('os2web_esdh_provider_debug_info')) {
+    $watchdog_rows = array();
     $watchdog_messages = db_query('SELECT * FROM {watchdog} w WHERE w.type = :type AND w.severity = :severity ORDER BY w.timestamp DESC', array(':type' => 'acadre MM', ':severity' => WATCHDOG_WARNING));
     $watchdog_head = array(t('Warning messages in descending order'), t('Date'));
     foreach ($watchdog_messages as $row) {
