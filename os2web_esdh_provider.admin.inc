@@ -161,7 +161,7 @@ function _os2web_esdh_provider_status_confirm_submit($form, &$form_state) {
     'file' => drupal_get_path('module', 'os2web_esdh_provider') . '/os2web_esdh_provider.mmapi.inc',
     'init_message' => t('Scanner filer'),
   );
-  $meetings = os2web_esdh_provider_invoke('mm', 'get_import_list');
+  $meetings = os2web_esdh_provider_invoke('mm', 'get_import_list', $force, $focus);
   foreach ($meetings as $meeting) {
     if (empty($focus) || in_array($meeting['id'], $focus)) {
       $batch['operations'][] = array(
