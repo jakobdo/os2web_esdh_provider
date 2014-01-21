@@ -90,10 +90,8 @@ function _os2web_esdh_provider_import_meeting($meeting_id, $force = FALSE, &$con
     // Meeting already exist.
     // Either republish, delete or skip.
     if ($nid) {
-
-      if ($force) {
+      if ($force || (defined('MM_REPUBLISH_MEETINGS') && MM_REPUBLISH_MEETINGS)) {
         err_debug('Republish nid: ' . $nid);
-
         $node = node_load($nid);
         watchdog('acadre MM', 'Using %nid for import.', array('%nid' => $nid), WATCHDOG_DEBUG);
       }
@@ -204,11 +202,13 @@ function _os2web_esdh_provider_import_meeting($meeting_id, $force = FALSE, &$con
     }
 
     // Delete all bullet points before importing.
-    $bullets = array_shift($node->field_os2web_meetings_bullets);
-    if (is_array($bullets)) {
-      $nids_to_delete = array();
-      foreach ($bullets as $nids) {
-        $nids_to_delete[$nids['target_id']] = $nids['target_id'];
+    if (is_array($node->field_os2web_meetings_bullets)) {
+      $bullets = array_shift($node->field_os2web_meetings_bullets);
+      if (is_array($bullets)) {
+        $nids_to_delete = array();
+        foreach ($bullets as $nids) {
+          $nids_to_delete[$nids['target_id']] = $nids['target_id'];
+        }
       }
     }
 
@@ -496,7 +496,7 @@ function _acadre_esdh_import_term($term_name, $vocab) {
 
   // Searching for an existing term based on the provided ESDH ID.
   if (!empty($term_esdh_id_field) && !empty($term_esdh_id) && $term_esdh_id > 0) {
-    $term->{$term_esdh_id_field}[und][0][value] = $term_esdh_id;
+    $term->{$term_esdh_id_field}['und'][0]['value'] = $term_esdh_id;
 
     $query = new EntityFieldQuery();
     $result = $query->entityCondition('entity_type', 'taxonomy_term')
