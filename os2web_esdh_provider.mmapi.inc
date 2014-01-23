@@ -137,7 +137,8 @@ function _os2web_esdh_provider_import_meeting($meeting_id, $force = FALSE, &$con
     # skifter@bellcom.dk - 2013-04-14 / 2013-04-24
 
     # is the pathauto module loades ?
-    if (module_exists('pathauto')) {
+    // Don't create aliases (vitaliy.sekan@propeople.com.ua)   
+    if (module_exists('pathauto') && FALSE) {
 
       # Loading the path auto modules
       module_load_include('inc', 'pathauto', 'pathauto');
