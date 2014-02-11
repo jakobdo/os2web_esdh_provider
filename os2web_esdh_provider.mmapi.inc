@@ -510,7 +510,7 @@ function _acadre_esdh_import_term($term_name, $vocab) {
   }
   // If no ESDH ID is provided are we falling back and selecting on the
   // term name.
-  else if (!empty($tid)) {
+  else {
     $tid = db_select('taxonomy_term_data', 'td')
       ->fields('td', array('tid'))
       ->condition('name', $term->name)
