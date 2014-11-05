@@ -2,14 +2,31 @@
 
 /**
  * @file
- * This file implements the importing functions of the MM functionality and depends on a
+ * This file implements the importing functions 
+ * of the MM functionality and depends on a
  * plugin to do the actual filereads
+ */
+
+/**
+ * Pretty sizes.
+ *
+ * @param int $size
+ *   Size in bytes
+ * 
+ * @return string
+ *   Pretty size
  */
 function hr_size($size) {
   $unit = array('b', 'kb', 'mb', 'gb', 'tb', 'pb');
   return @round($size / pow(1024, ($i = floor(log($size, 1024)))), 2) . ' ' . $unit[$i];
 }
 
+/**
+ * Internal logger.
+ *
+ * @param string $msg
+ *   Message to log
+ */
 function err_debug($msg = FALSE) {
   if (variable_get('os2web_esdh_provider_debug_info')) {
     $mem = hr_size(memory_get_usage());
@@ -88,25 +105,42 @@ function _os2web_esdh_provider_import_meeting($meeting_id, $force = FALSE, &$con
     err_debug('Importing meeting with ' . count($meeting['items']) . ' bullet points.');
 
     // Meeting already exist.
-    // Either republish, delete or skip.
+    // Either update, republish, delete or skip.
     if ($nid) {
-      if ($force || (defined('MM_REPUBLISH_MEETINGS') && MM_REPUBLISH_MEETINGS)) {
-        err_debug('Republish nid: ' . $nid);
-        $node = node_load($nid);
-        watchdog('acadre MM', 'Using %nid for import.', array('%nid' => $nid), WATCHDOG_DEBUG);
+      $node = node_load($nid);
+      $republish = FALSE;
+
+      // Republish by Force.
+      if ($force) {
+        $republish = TRUE;
+        $reason = 'FORCE';
       }
+
+      // Republish by setting.
+      if (defined('MM_REPUBLISH_MEETINGS') && MM_REPUBLISH_MEETINGS) {
+        $republish = TRUE;
+        $reason = 'MM_REPUBLISH_MEETINGS';
+      }
+
+      // Republish if meeting_sub_id changed.
+      if (defined('MM_REPUBLISH_SUBVERSION') && MM_REPUBLISH_SUBVERSION) {
+        if ($node->field_os2web_meetings_sub_id[LANGUAGE_NONE][0]['value'] !== $meeting['meeting_sub_id']) {
+          $republish = TRUE;
+          $reason = 'MM_REPUBLISH_SUBVERSION';
+        }
+      }
+      
       // Republish if current meeting is of type Referat.
       // This means that the one already exist is a Dagsorden.
-      elseif ($meeting['type'] === 'Referat') {
-        $node = node_load($nid);
-        if ($node->field_os2web_meetings_type[LANGUAGE_NONE][0]['value'] !== 'Dagsorden') {
-          err_debug('Skipping nid: ' . $nid);
-          watchdog('acadre MM', 'Meeting already imported in %nid. Skipṕing.', array('%nid' => $nid), WATCHDOG_DEBUG);
-          lock_release(__FUNCTION__ . $meeting_id['id']);
-          return;
-        }
-        err_debug('Republish nid: ' . $nid);
-        watchdog('acadre MM', 'Using %nid for import. Type mismatch.', array('%nid' => $nid), WATCHDOG_DEBUG);
+      if ($meeting['type'] === 'Referat' && $node->field_os2web_meetings_type[LANGUAGE_NONE][0]['value'] === 'Dagsorden') {
+        $republish = TRUE;
+        $reason = 'DAGSORDEN -> REFERAT';
+      }
+
+      // Republish.
+      if ($republish) {
+        err_debug('Republish nid: ' . $nid . ' - Reason: ' . $reason);
+        watchdog('acadre MM', 'Using %nid for import. Reason: %reason', array('%nid' => $nid, '%reason' => $reason), WATCHDOG_DEBUG);
       }
       else {
         // Meeting already exists. Skip it.
@@ -132,24 +166,24 @@ function _os2web_esdh_provider_import_meeting($meeting_id, $force = FALSE, &$con
     // Set field values:
     $node->title = $meeting['title'];
 
-    # The original field for title came from $meeting['title'];
-    # This is a rewrite of the function to set the path automaticaly and with custom data - sutch as date.
-    # skifter@bellcom.dk - 2013-04-14 / 2013-04-24
+    // The original field for title came from $meeting['title'];
+    // This is a rewrite of the function to set the path automaticaly and with custom data - sutch as date.
+    // skifter@bellcom.dk - 2013-04-14 / 2013-04-24
 
-    # is the pathauto module loades ?
+    // is the pathauto module loades ?
     // Don't create aliases (vitaliy.sekan@propeople.com.ua)   
     if (module_exists('pathauto') && !(defined('MN_DISABLE_PATHAUTO') && MN_DISABLE_PATHAUTO)) {
 
-      # Loading the path auto modules
+      // Loading the path auto modules
       module_load_include('inc', 'pathauto', 'pathauto');
 
-      # Setting the new title with committee name and meeting date substring
+      // Setting the new title with committee name and meeting date substring
       $my_date = date_create(substr($meeting['meeting_date_start'], 0,10));
       $format = "d-m-Y";
       $committee_name = is_array($meeting['committee']) ? $meeting['committee']['esdh_name'] : $meeting['committee'];
       $node->title = $committee_name . ' - ' . date_format($my_date,$format);
 
-      # adding the alias and setting pathauto to 0 for this content type. otherwise we get 2 aliases.
+      // adding the alias and setting pathauto to 0 for this content type. otherwise we get 2 aliases.
       $path_alias = array(
           'alias' => 'dagsorden/' . pathauto_cleanstring($node->title),
           'pid' => null,
@@ -160,7 +194,7 @@ function _os2web_esdh_provider_import_meeting($meeting_id, $force = FALSE, &$con
       $node->path = $path_alias;
     }
 
-    $node->field_os2web_meetings_abbr[LANGUAGE_NONE][0]['value'] = mb_substr($meeting['description'], 0, 49);
+    $node->field_os2web_meetings_abbr[LANGUAGE_NONE][0]['value'] = substr($meeting['description'], 0, 49);
     // If field has a format, you need to define it. Here we define a default filtered_html format for a body field.
     $node->field_os2web_meetings_abbr[LANGUAGE_NONE][0]['format'] = 'filtered_html';
     // The date.
@@ -203,7 +237,7 @@ function _os2web_esdh_provider_import_meeting($meeting_id, $force = FALSE, &$con
     }
 
     // Delete all bullet points before importing.
-    if(property_exists($node,'field_os2web_meetings_bullets') && is_array($node->field_os2web_meetings_bullets)) {
+    if (is_array($node->field_os2web_meetings_bullets)) {
       $bullets = array_shift($node->field_os2web_meetings_bullets);
       if (is_array($bullets)) {
         $nids_to_delete = array();
