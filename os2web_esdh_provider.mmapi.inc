@@ -72,9 +72,13 @@ function _os2web_esdh_provider_import_meeting($meeting_id, $force = FALSE, &$con
       // Run check to see if meeting is already imported.
       // System ID is the same on all meetings.
       $query = new EntityFieldQuery();
+      //TODO
+      //->addTag('DANGEROUS_ACCESS_CHECK_OPT_OUT') Tillægsdagsorden fails when run in cron
+      //http://drupal.stackexchange.com/questions/65858/running-entityfieldquery-on-restricted-content-with-cron
       $result = $query->entityCondition('entity_type', 'node')
         ->propertyCondition('type', 'os2web_meetings_meeting')
         ->fieldCondition('field_os2web_meetings_system_id', 'value', $meetings[$i]['system_id'], '=')
+        ->addTag('DANGEROUS_ACCESS_CHECK_OPT_OUT')
         ->execute();
       if (isset($result['node'])) {
         $nid = array_shift($result['node'])->nid;
@@ -103,6 +107,8 @@ function _os2web_esdh_provider_import_meeting($meeting_id, $force = FALSE, &$con
     err_debug('Start import meeting ' . $meeting['system_id']);
     err_debug('Importing meeting with ' . count($meeting['items']) . ' bullet points.');
 
+    $committee_term = NULL;
+    
     // Meeting already exist.
     // Either update, republish, delete or skip.
     if ($nid) {
@@ -206,7 +212,7 @@ function _os2web_esdh_provider_import_meeting($meeting_id, $force = FALSE, &$con
       $node->path = $path_alias;
     }
 
-    $node->field_os2web_meetings_abbr[LANGUAGE_NONE][0]['value'] = substr($meeting['description'], 0, 49);
+    $node->field_os2web_meetings_abbr[LANGUAGE_NONE][0]['value'] = mb_substr($meeting['description'], 0, 49);
     // If field has a format, you need to define it. Here we define a default
     // filtered_html format for a body field.
     $node->field_os2web_meetings_abbr[LANGUAGE_NONE][0]['format'] = 'filtered_html';
@@ -236,8 +242,9 @@ function _os2web_esdh_provider_import_meeting($meeting_id, $force = FALSE, &$con
     }
     
      //Adding comments
-   if (isset($meeting['description'])){
-      $node->field_os2web_meetings_comments[LANGUAGE_NONE][0]['value'] = $meeting['comments'];
+    //TODO - SURE THIS IS NOT COMMENT?
+   if (isset($meeting['comment'])){
+      $node->field_os2web_meetings_comments[LANGUAGE_NONE][0]['value'] = $meeting['comment'];
     }
 
     // Make sure the committee term is created and get the term.
@@ -308,10 +315,12 @@ function _os2web_esdh_provider_import_meeting($meeting_id, $force = FALSE, &$con
     err_debug('Meeting saved. $node->nid = ' . print_r($node->nid, 1));
   }
 
-  _os2web_esdh_provider_send_statusmail(t('!id successfully imported into node !nid.', array('!id' => $meeting_id['id'], '!nid' => $node->nid)));
+  if (isset($node)) {
+    _os2web_esdh_provider_send_statusmail(t('!id successfully imported into node !nid.', array('!id' => $meeting_id['id'], '!nid' => $node->nid)));
+  }
 
   variable_set('os2web_esdh_provider_last_import', time());
-  err_debug('END import meeting ' . $meeting['system_id'] . '');
+  err_debug('END import meeting ' . $meeting_id['id'] . '');
   lock_release(__FUNCTION__ . $meeting_id['id']);
   return $nids;
 }
@@ -345,7 +354,7 @@ function _os2web_esdh_provider_import_items($items) {
     }
 
     if ($item['access'] === 'Lukket') {
-      $node->field_os2web_meetings_bul_closed[LANGUAGE_NONE][]['value'] = 1;
+      $node->field_os2web_meetings_bul_closed[LANGUAGE_NONE][]['value'] = 0;
       if (module_exists('os2dagsorden_esdh_provider')){
         $node = os2dagsorden_esdh_provider_process_closed_bullet($node, $item); 
       }
@@ -354,7 +363,7 @@ function _os2web_esdh_provider_import_items($items) {
       $nids[] = $node->nid;
     }
     else {
-      $node->field_os2web_meetings_bul_closed[LANGUAGE_NONE][]['value'] = 0;
+      $node->field_os2web_meetings_bul_closed[LANGUAGE_NONE][]['value'] = 1;
       if (isset($item['movie_id']) && is_numeric($item["chapter"])) {
         $node->field_os2web_meetings_qbrickref[LANGUAGE_NONE][0]['id'] = $item['movie_id'];
         $node->field_os2web_meetings_qbrickref[LANGUAGE_NONE][0]['seek'] = $item["chapter"];
@@ -504,10 +513,6 @@ function _os2web_esdh_provider_import_file($file_meta) {
   if (!(defined('MM_USE_ALTERNATIVE_FILE_URI_SCHEME') && MM_USE_ALTERNATIVE_FILE_URI_SCHEME) && file_uri_scheme($uri) != 'public') {
     watchdog('acadre MM', 'Invalid scheme for uri %uri, Possibly absolut path ? ' . $uri, array(
       '%uri', $uri), WATCHDOG_ERROR);
-    error_log("Var: \$uri = " . print_r($uri, 1));
-    error_log("Var: \$uri_in = " . print_r($uri_in, 1));
-    error_log("Var: \$uri_out = " . print_r($uri_out, 1));
-    error_log("Var: \$uri_pdf = " . print_r($uri_pdf, 1));
   }
 
   $fid = db_select('file_managed', 'fm')

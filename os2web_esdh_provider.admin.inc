@@ -6,28 +6,6 @@
  */
 
 /**
- * Form callback for settings.
- */
-function _os2web_esdh_provider_settings() {
-  // MM configuration.
-  $form['meetings']['os2web_meetings_import_service_ip'] = array(
-    '#type' => 'textfield',
-    '#title' => t('IP addresses allowed to trigger import'),
-    '#description' => t('IP addresses separated by comma which can access <em>admin/os2web/import/<ID></em>.'),
-    '#default_value' => variable_get('os2web_meetings_import_service_ip', ip_address()),
-  );
-
-  // Enable external queue import.
-  $form['os2web_esdh_provider']['os2web_esdh_provider_queue_enabled'] = array(
-    '#type' => 'checkbox',
-    '#title' => t('Enable external queue import'),
-    '#default_value' => variable_get('os2web_esdh_provider_queue_enabled', FALSE),
-  );
-
-  return system_settings_form($form);
-}
-
-/**
  * Page callback. Displays status page.
  */
 function _os2web_esdh_provider_status() {

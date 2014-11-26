@@ -12,15 +12,6 @@
  * Implements hook_menu().
  */
 function os2web_esdh_provider_menu() {
-  $items['admin/config/os2web_esdh_provider'] = array(
-    'title' => 'OS2Web ESDH Provider',
-    'position' => 'right',
-    'weight' => -15,
-    'access arguments' => array('administer os2web'),
-    'page callback' => 'system_admin_menu_block_page',
-    'file' => 'system.admin.inc',
-    'file path' => drupal_get_path('module', 'system'),
-  );
   $items['admin/config/os2web/esdh_provider/importconfirm'] = array(
     'title' => 'Confirm reimport',
     'access arguments' => array('administer os2web'),
@@ -29,22 +20,11 @@ function os2web_esdh_provider_menu() {
     'type' => MENU_CALLBACK,
     'file' => 'os2web_esdh_provider.admin.inc',
   );
-  $items['admin/config/os2web/esdh_provider/status'] = array(
-    'title' => 'Status',
-    'description' => 'Overview page for OS2Web ESDH Provider',
+  $items['admin/config/os2web/esdh_provider'] = array(
+    'title' => 'ESDH status',
     'access arguments' => array('administer os2web'),
     'page callback' => '_os2web_esdh_provider_status',
-    'weight' => -10,
-    'type' => MENU_NORMAL_ITEM,
-    'file' => 'os2web_esdh_provider.admin.inc',
-  );
-  $items['admin/config/os2web_esdh_provider/settings'] = array(
-    'title' => 'Settings',
-    'description' => 'Configure OS2Web ESDH Provider',
-    'access arguments' => array('administer os2web'),
-    'page callback' => 'drupal_get_form',
-    'page arguments' => array('_os2web_esdh_provider_settings'),
-    'type' => MENU_NORMAL_ITEM,
+    'type' => MENU_LOCAL_TASK,
     'file' => 'os2web_esdh_provider.admin.inc',
   );
   $items['node/%/info'] = array(
@@ -138,7 +118,7 @@ function _os2web_esdh_provider_import_access() {
  */
 function os2web_esdh_provider_node_delete($node) {
   if ($node->type === 'os2web_meetings_meeting') {
-    // Remove any addenums relating to this node.
+    // Remove any addendums relating to this node.
     $query = new EntityFieldQuery();
     $result = $query->entityCondition('entity_type', 'node')
       ->propertyCondition('type', 'os2web_meetings_meeting')
@@ -218,7 +198,6 @@ function os2web_esdh_provider_queue_meetings() {
       }
     }
     $queue->createItem(array('post_import_process' => TRUE));
-    variable_set('os2web_esdh_provider_last_mm_import', $current_timestamp);
 
     variable_set('os2web_esdh_provider_last_mm_import', time());
   }
@@ -593,4 +572,11 @@ function o2web_esdh_provider_os2web_help($sections) {
   $sections['import'] = t('<b>Meeting Import:</b> Import meetings trough the esdh provider. Press the [Run Import] at the <a href="@url" target="_blank">ESDH page</a>.', array('@url' => url('admin/config/os2web/esdh_provider')));
 
   return $sections;
+}
+
+/**
+* Implements hook_query_TAG_alter()
+*/
+function o2web_esdh_provider_query_efq_debug_alter(QueryAlterableInterface $query) {
+    error_log("Test 1");
 }
