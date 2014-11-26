@@ -76,6 +76,7 @@ function _os2web_esdh_provider_import_meeting($meeting_id, $force = FALSE, &$con
       $result = $query->entityCondition('entity_type', 'node')
         ->propertyCondition('type', 'os2web_meetings_meeting')
         ->fieldCondition('field_os2web_meetings_system_id', 'value', $meetings[$i]['system_id'], '=')
+        ->addTag('DANGEROUS_ACCESS_CHECK_OPT_OUT')
         ->execute();
       if (isset($result['node'])) {
         $nid = array_shift($result['node'])->nid;
