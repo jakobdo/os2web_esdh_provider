@@ -184,9 +184,13 @@ function _os2web_esdh_provider_import_meeting($meeting_id, $force = FALSE, &$con
       $committee_name = is_array($meeting['committee']) ? $meeting['committee']['esdh_name'] : $meeting['committee'];
       $node->title = $committee_name . ' - ' . date_format($my_date,$format);
 
+      $alias = 'dagsorden/' . pathauto_cleanstring($node->title);
+      $source = (isset($node->nid)) ? 'node/' . $node->nid : '';
+      pathauto_alias_uniquify($alias, $source, $node->language);
+
       // adding the alias and setting pathauto to 0 for this content type. otherwise we get 2 aliases.
       $path_alias = array(
-          'alias' => 'dagsorden/' . pathauto_cleanstring($node->title),
+          'alias' => $alias,
           'pid' => null,
           'source' => null,
           'language' => LANGUAGE_NONE,
