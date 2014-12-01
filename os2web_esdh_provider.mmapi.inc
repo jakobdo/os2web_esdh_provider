@@ -72,13 +72,9 @@ function _os2web_esdh_provider_import_meeting($meeting_id, $force = FALSE, &$con
       // Run check to see if meeting is already imported.
       // System ID is the same on all meetings.
       $query = new EntityFieldQuery();
-      //TODO
-      //->addTag('DANGEROUS_ACCESS_CHECK_OPT_OUT') Tillægsdagsorden fails when run in cron
-      //http://drupal.stackexchange.com/questions/65858/running-entityfieldquery-on-restricted-content-with-cron
       $result = $query->entityCondition('entity_type', 'node')
         ->propertyCondition('type', 'os2web_meetings_meeting')
         ->fieldCondition('field_os2web_meetings_system_id', 'value', $meetings[$i]['system_id'], '=')
-        ->addTag('DANGEROUS_ACCESS_CHECK_OPT_OUT')
         ->execute();
       if (isset($result['node'])) {
         $nid = array_shift($result['node'])->nid;
