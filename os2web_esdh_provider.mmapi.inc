@@ -76,7 +76,6 @@ function _os2web_esdh_provider_import_meeting($meeting_id, $force = FALSE, &$con
       $result = $query->entityCondition('entity_type', 'node')
         ->propertyCondition('type', 'os2web_meetings_meeting')
         ->fieldCondition('field_os2web_meetings_system_id', 'value', $meetings[$i]['system_id'], '=')
-        ->addTag('DANGEROUS_ACCESS_CHECK_OPT_OUT')
         ->execute();
       if (isset($result['node'])) {
         $nid = array_shift($result['node'])->nid;
@@ -199,7 +198,7 @@ function _os2web_esdh_provider_import_meeting($meeting_id, $force = FALSE, &$con
       $node->path = $path_alias;
     }
 
-    $node->field_os2web_meetings_abbr[LANGUAGE_NONE][0]['value'] = substr($meeting['description'], 0, 49);
+    $node->field_os2web_meetings_abbr[LANGUAGE_NONE][0]['value'] = mb_substr($meeting['description'], 0, 49);
     // If field has a format, you need to define it. Here we define a default filtered_html format for a body field.
     $node->field_os2web_meetings_abbr[LANGUAGE_NONE][0]['format'] = 'filtered_html';
     // The date.
