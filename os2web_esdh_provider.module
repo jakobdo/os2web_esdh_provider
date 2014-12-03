@@ -176,9 +176,13 @@ function os2web_esdh_provider_cron() {
       $current_timestamp = time();
       $last_mm_import_time = variable_get('os2web_esdh_provider_last_mm_import', FALSE);
 
+      error_log("Current timestamp: " . $current_timestamp);
+      error_log("Last import:       " . $last_mm_import_time);
+			
       foreach ($meetings as $meeting) {
         // Only import files newer than last cron job.
         if (!$last_mm_import_time || filemtime($meeting['uri']) > $last_mm_import_time) {
+          error_log("Import meeting: " . $meeting['uri']);
           $queue->createItem(array('meeting' => $meeting, 'force' => FALSE));
         }
       }

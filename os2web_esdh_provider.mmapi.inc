@@ -145,7 +145,7 @@ function _os2web_esdh_provider_import_meeting($meeting_id, $force = FALSE, &$con
       else {
         // Meeting already exists. Skip it.
         err_debug('Skipping nid: ' . $nid);
-        watchdog('acadre MM', 'Meeting already imported in %nid. Skipṕing.', array('%nid' => $nid), WATCHDOG_DEBUG);
+        watchdog('acadre MM', 'Meeting already imported in %nid. Skipping.', array('%nid' => $nid), WATCHDOG_DEBUG);
         lock_release(__FUNCTION__ . $meeting_id['id']);
         return;
       }
