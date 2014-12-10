@@ -58,8 +58,8 @@ function os2web_esdh_provider_menu() {
 function os2web_esdh_provider_form_os2web_settings_settings_form_alter(&$form, &$form_state) {
   $form['os2web_esdh_provider'] = array(
     '#type' => 'fieldset',
-    '#title' => 'Import',
-    '#description' => 'Generelle indstillinger vedr. import',
+    '#title' => t('Import'),
+    '#description' => t('Import settings'),
     '#collapsible' => TRUE,
     '#collapsed' => FALSE,
   );
@@ -67,9 +67,17 @@ function os2web_esdh_provider_form_os2web_settings_settings_form_alter(&$form, &
   // MM configuration.
   $form['os2web_esdh_provider']['os2web_meetings_import_service_ip'] = array(
     '#type' => 'textfield',
-    '#title' => 'IP addresser der kan udløse import',
-    '#description' => 'Komma separeret liste af ip-addresser der kan tilgå <em>admin/os2web/import/<ID></em>.',
+    '#title' => t('IP addresses which is able to trigger import'),
+    '#description' => t('Comma separated list of IP addresses that can access <em>admin/os2web/import/<ID></em>.'),
     '#default_value' => variable_get('os2web_meetings_import_service_ip', ip_address()),
+  );
+  
+  // Delayed import.
+  $form['os2web_esdh_provider']['os2web_esdh_provider_last_mm_import_diff_hours'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Extend the import period (hours)'),
+    '#description' => t('Extend the import period which will look the changes in xml-manifest files.'),
+    '#default_value' => variable_get('os2web_esdh_provider_last_mm_import_diff_hours', 0),
   );
 
   // Enable external queue import.
@@ -202,11 +210,12 @@ function os2web_esdh_provider_cron() {
       $meetings = os2web_esdh_provider_invoke('mm', 'get_import_list');
       $current_timestamp = time();
       $last_mm_import_time = variable_get('os2web_esdh_provider_last_mm_import', FALSE);
-
-      $diff_time = 60 * 60 * 2; // 2 hours
+      $diff_hours = variable_get('os2web_esdh_provider_last_mm_import_diff_hours', 0);
+      $diff_seconds = 60 * 60 * $diff_hours;
+      
       foreach ($meetings as $meeting) {
         // Only import files newer than last cron job.
-        if (!$last_mm_import_time || (filemtime($meeting['uri'])+$diff_time) > $last_mm_import_time) {
+        if (!$last_mm_import_time || (filemtime($meeting['uri']) + $diff_seconds) > $last_mm_import_time) {
           $queue->createItem(array('meeting' => $meeting, 'force' => FALSE));
         }
       }
@@ -224,11 +233,12 @@ function os2web_esdh_provider_queue_meetings() {
     $meetings = os2web_esdh_provider_invoke('mm', 'get_import_list');
     $last_mm_import_time = variable_get('os2web_esdh_provider_last_mm_import', FALSE);
     $queue = DrupalQueue::get('acadre_mm_import');
-    $diff_time = 60 * 60 * 2; // 2 hours
+    $diff_hours = variable_get('os2web_esdh_provider_last_mm_import_diff_hours', 0);
+    $diff_seconds = 60 * 60 * $diff_hours;
 
     foreach ($meetings as $meeting) {
       // Only import files newer than last cron job.
-      if (!$last_mm_import_time || (filemtime($meeting['uri'])+$diff_time) > $last_mm_import_time) {
+      if (!$last_mm_import_time || (filemtime($meeting['uri']) + $diff_seconds) > $last_mm_import_time) {
         $queue->createItem(array('meeting' => $meeting, 'force' => FALSE));
       }
     }
