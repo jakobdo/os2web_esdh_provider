@@ -263,7 +263,6 @@ function _os2web_esdh_provider_status_confirm_submit($form, &$form_state) {
 
     batch_set($batch);
     // This isn't entirely neccesary, but needed to make the redirect work.
-    variable_set('os2web_esdh_provider_last_mm_import', $current_timestamp);
     batch_process('admin/config/os2web/esdh_provider');
   }
 }
