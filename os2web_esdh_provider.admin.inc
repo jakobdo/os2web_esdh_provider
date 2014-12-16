@@ -230,6 +230,7 @@ function _os2web_esdh_provider_status_confirm_submit($form, &$form_state) {
     'operations' => array(),
     'file' => drupal_get_path('module', 'os2web_esdh_provider') . '/os2web_esdh_provider.mmapi.inc',
     'init_message' => t('Scanner filer'),
+    'finished' => 'os2web_esdh_provider_clear_cache',
   );
 
   $meetings = os2web_esdh_provider_invoke('mm', 'get_import_list');
@@ -249,6 +250,7 @@ function _os2web_esdh_provider_status_confirm_submit($form, &$form_state) {
   // Use normal batch processing if external queue is disabled.
   else {
     foreach ($meetings as $meeting) {
+      $meeting['file_time'] = filemtime($meeting['uri']);
       if (empty($focus) || in_array($meeting['id'], $focus)) {
         $batch['operations'][] = array(
           '_os2web_esdh_provider_import_meeting',
@@ -263,6 +265,6 @@ function _os2web_esdh_provider_status_confirm_submit($form, &$form_state) {
 
     batch_set($batch);
     // This isn't entirely neccesary, but needed to make the redirect work.
-    batch_process('admin/config/os2web/esdh_provider');
+    // batch_process('admin/config/os2web/esdh_provider');
   }
 }
