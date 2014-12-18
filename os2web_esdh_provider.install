@@ -5,20 +5,6 @@
  */
 
 /**
- * Imlpements hook_install().
- */
-function os2web_esdh_provider_install() {
-  // Placeholder.
-}
-
-/**
- * Implements hook_uninstall().
- */
-function os2web_esdh_provider_uninstall() {
-  // Placeholder.
-}
-
-/**
  * Implements hook_requirements().
  */
 function os2web_esdh_provider_requirements($phase) {
@@ -49,7 +35,6 @@ function os2web_esdh_provider_requirements($phase) {
     $desc = $t('No ESDH plugins activated! This can lead to not-working or misleading behavior on the site! <a href="admin/config/os2web/esdh_provider">Check status</a>');
   }
 
-
   $requirements['os2web_esdh_provider_plugins'] = array(
     'title' => $t('OS2Web ESDH integration.'),
     'value' => $value,
@@ -71,7 +56,7 @@ function os2web_esdh_provider_update_7001() {
 /**
  * Implements hook_schema().
  */
-function os2web_esdh_provider_schema(){
+function os2web_esdh_provider_schema() {
   $schema['os2web_esdh_provider_import'] = array(
     'description' => 'ESDH Provider Import Queue.',
     'fields' => array(
@@ -87,7 +72,7 @@ function os2web_esdh_provider_schema(){
         'type' => 'int',
         'unsigned' => TRUE,
         'not null' => TRUE,
-        ),
+      ),
     ),
     'primary key' => array('filename'),
   );

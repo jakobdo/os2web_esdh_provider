@@ -16,7 +16,7 @@ os2web_esdh_provider_queue_meetings();
 if (lock_acquire('os2web_esdh_provider_queue', 10000)) {
   $queue = DrupalQueue::get('acadre_mm_import');
 
-  while($item = $queue->claimItem()) {
+  while ($item = $queue->claimItem()) {
     _os2web_esdh_provider_cron_queue_worker($item->data);
     $queue->deleteItem($item);
   }
